@@ -4,11 +4,11 @@ This project is a web-based tool for visualizing Natural Language Processing (NL
 
 ## Features
 
-*   **Interactive Diagram:** Visualize the entire NLP pipeline as a directed graph.
-*   **Step-by-step Analysis:** Inspect the output of each processing stage.
-*   **Customizable Pipelines:** (Coming Soon) Build and modify your own NLP pipelines.
+- **Interactive Diagram:** Visualize the entire NLP pipeline as a directed graph.
+- **Step-by-step Analysis:** Inspect the output of each processing stage.
+- **Customizable Pipelines:** (Coming Soon) Build and modify your own NLP pipelines.
 
 ## Tech Stack
 
-*   **Frontend:** React, TypeScript, Vite, TailwindCSS
-*   **Backend:** Python, Flask
+- **Frontend:** React, TypeScript, Vite, TailwindCSS
+- **Backend:** Python, FastAPI
