@@ -1,21 +1,30 @@
 from contextlib import asynccontextmanager
+import logging
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-try:
-    from backend.pipeline import NLPVisualizerPipeline
-except ModuleNotFoundError:
-    from pipeline import NLPVisualizerPipeline
+from pipeline import NLPVisualizerPipeline
 
-pipeline: NLPVisualizerPipeline | None = None
+try:
+    import spacy
+except ImportError:
+    spacy = None
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    global pipeline
-    pipeline = NLPVisualizerPipeline()
+    """Load the NLP model on startup and share it across requests."""
+    nlp_model = None
+    if spacy:
+        try:
+            nlp_model = spacy.load("en_core_web_sm")
+        except OSError:
+            logging.warning("Spacy model 'en_core_web_sm' not found. NLP features will be limited.")
+    app.state.nlp = nlp_model
     yield
+
 
 app = FastAPI(title="NLP Pipeline Visualizer", version="1.0.0", lifespan=lifespan)
 
@@ -39,8 +48,6 @@ def healthcheck() -> dict[str, str]:
 
 @app.post("/preprocess")
 def preprocess(payload: PreprocessRequest) -> dict:
-    if pipeline is None:
-        # This would indicate a startup error.
-        return {"error": "Pipeline not initialized"}
-    steps = pipeline.run(payload.text)
+    pipeline = NLPVisualizerPipeline(payload.text, nlp_model=app.state.nlp)
+    steps = pipeline.run()
     return {"steps": [step.model_dump() for step in steps]}

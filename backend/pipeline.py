@@ -17,26 +17,11 @@ except ModuleNotFoundError:
     from preprocessors.lemmatizer import LemmatizerStep
     from preprocessors.embeddings import EmbeddingStep
 
-try:
-    import spacy
-except ImportError:  # pragma: no cover - environment fallback
-    spacy = None
-
 
 class NLPVisualizerPipeline:
-    def __init__(self, text: str) -> None:
+    def __init__(self, text: str, nlp_model: object | None = None) -> None:
         self.text = text
-
-    def _load_nlp(self):
-        if spacy is None:
-            return None
-        try:
-            return spacy.load("en_core_web_sm")
-        except OSError:
-            try:
-                return spacy.blank("en")
-            except Exception:
-                return None
+        self.nlp = nlp_model
 
     def run(self) -> list[PipelineStep]:
         steps: list[PipelineStep] = []
@@ -50,8 +35,7 @@ class NLPVisualizerPipeline:
         steps.append(lower)
         current = lower.output
 
-        nlp = self._load_nlp()
-        doc = nlp(current) if nlp is not None else None
+        doc = self.nlp(current) if self.nlp is not None else None
 
         token_step = TokenizerStep(current, doc)
         steps.append(token_step.step())
@@ -67,11 +51,12 @@ class NLPVisualizerPipeline:
         steps.append(stopwords.step())
         current = stopwords.output
 
-        stemmer = StemmerStep(current)
+        stemmer = StemmerStep(current) # current is a list of tokens
         steps.append(stemmer.step())
-        current = stemmer.output
 
-        lemmatizer = LemmatizerStep(current, doc)
+        # Re-run spacy on the post-stopword text for accurate lemmatization
+        doc_after_stopwords = self.nlp(" ".join(current)) if self.nlp is not None else None
+        lemmatizer = LemmatizerStep(current, doc_after_stopwords)
         steps.append(lemmatizer.step())
         current = lemmatizer.output
 
