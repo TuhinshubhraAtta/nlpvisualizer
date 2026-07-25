@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 import logging
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,22 +8,37 @@ from pydantic import BaseModel
 
 from pipeline import NLPVisualizerPipeline
 
+spacy_model: Any = None
+
 try:
     import spacy
 except ImportError:
     spacy = None
 
 
+try:
+    from transformers import AutoTokenizer
+except ImportError:
+    AutoTokenizer = None
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Load the NLP model on startup and share it across requests."""
+    global spacy_model
     nlp_model = None
     if spacy:
         try:
             nlp_model = spacy.load("en_core_web_sm")
+            spacy_model = nlp_model
         except OSError:
             logging.warning("Spacy model 'en_core_web_sm' not found. NLP features will be limited.")
     app.state.nlp = nlp_model
+
+    subword_tokenizer = None
+    if AutoTokenizer:
+        subword_tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+    app.state.subword_tokenizer = subword_tokenizer
     yield
 
 
@@ -48,6 +64,6 @@ def healthcheck() -> dict[str, str]:
 
 @app.post("/preprocess")
 def preprocess(payload: PreprocessRequest) -> dict:
-    pipeline = NLPVisualizerPipeline(payload.text, nlp_model=app.state.nlp)
+    pipeline = NLPVisualizerPipeline(payload.text, nlp_model=app.state.nlp, subword_tokenizer=app.state.subword_tokenizer)
     steps = pipeline.run()
     return {"steps": [step.model_dump() for step in steps]}

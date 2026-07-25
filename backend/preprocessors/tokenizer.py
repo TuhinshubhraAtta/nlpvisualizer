@@ -1,47 +1,71 @@
 from __future__ import annotations
+from typing import TYPE_CHECKING
 
 try:
     from backend.models import PipelineStep
 except ModuleNotFoundError:
     from models import PipelineStep
 
-try:
-    import spacy
-except ImportError:  # pragma: no cover - environment fallback
-    spacy = None
+if TYPE_CHECKING:
+    from spacy.tokens import Doc
+    from transformers import PreTrainedTokenizerBase
 
 
-class TokenizerStep:
-    def __init__(self, text: str, doc: object | None = None) -> None:
+class WordTokenizerStep:
+    def __init__(self, text: str, doc: "Doc | None" = None) -> None:
         self.text = text
         self.doc = doc
         self.output = self._tokenize(text, doc)
 
     @staticmethod
-    def _tokenize(text: str, doc: object | None = None) -> list[str]:
+    def _tokenize(text: str, doc: "Doc | None" = None) -> list[str]:
         if doc is not None:
             return [token.text for token in doc]
         return text.split()
 
     def step(self) -> PipelineStep:
         return PipelineStep(
-            name="Tokenization",
-            description="Use spaCy tokenization to split the cleaned sentence into discrete tokens.",
+            name="Word Tokenization",
+            description="Use spaCy's linguistic rules to split the sentence into word-level tokens.",
             code="doc = nlp(text)\ntokens = [token.text for token in doc]",
             input=self.text,
             output=self.output,
-            explanation="Split the sentence into authentic spaCy tokens.",
+            explanation="Split the sentence into word tokens using spaCy's model.",
+        )
+
+
+class SubwordTokenizerStep:
+    def __init__(self, text: str, tokenizer: "PreTrainedTokenizerBase | None" = None) -> None:
+        self.text = text
+        self.tokenizer = tokenizer
+        self.output = self._tokenize(text, tokenizer)
+
+    @staticmethod
+    def _tokenize(text: str, tokenizer: "PreTrainedTokenizerBase | None" = None) -> list[str]:
+        if tokenizer is not None:
+            # Use the __call__ method of the tokenizer and then decode
+            return tokenizer.tokenize(text)
+        return ["Subword", "tokenizer", "not", "available", "."]
+
+    def step(self) -> PipelineStep:
+        return PipelineStep(
+            name="Subword Tokenization",
+            description="Use a subword tokenizer (like BPE) to split text into sub-word units, common in transformer models.",
+            code="tokens = tokenizer.tokenize(text)",
+            input=self.text,
+            output=self.output,
+            explanation="Split the sentence into subword tokens, which can handle out-of-vocabulary words.",
         )
 
 
 class POSStep:
-    def __init__(self, tokens: list[str], doc: object | None = None) -> None:
+    def __init__(self, tokens: list[str], doc: "Doc | None" = None) -> None:
         self.tokens = tokens
         self.doc = doc
         self.output = self._pos(doc, tokens)
 
     @staticmethod
-    def _pos(doc: object | None, tokens: list[str]) -> list[dict[str, str]]:
+    def _pos(doc: "Doc | None", tokens: list[str]) -> list[dict[str, str]]:
         if doc is not None:
             return [
                 {"token": token.text, "pos": token.pos_, "tag": token.tag_}
@@ -61,19 +85,19 @@ class POSStep:
 
 
 class NERStep:
-    def __init__(self, tokens: list[str], doc: object | None = None) -> None:
+    def __init__(self, tokens: list[str], doc: "Doc | None" = None) -> None:
         self.tokens = tokens
         self.doc = doc
         self.output = self._entities(doc, tokens)
 
     @staticmethod
-    def _entities(doc: object | None, tokens: list[str]) -> list[dict[str, str]]:
+    def _entities(doc: "Doc | None", tokens: list[str]) -> list[dict[str, str | int]]:
         if doc is not None:
             return [
                 {"text": entity.text, "label": entity.label_, "start": entity.start_char, "end": entity.end_char}
                 for entity in doc.ents
             ]
-        return [{"text": token, "label": "UNKNOWN", "start": 0, "end": 0} for token in tokens]
+        return []
 
     def step(self) -> PipelineStep:
         return PipelineStep(
