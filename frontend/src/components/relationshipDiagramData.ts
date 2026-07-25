@@ -94,12 +94,19 @@ export const nodes: DiagramNode[] = [
       "Removes HTML, links, punctuation, emojis, and whitespace noise before any NLP processing.",
   },
   {
-    id: "tokenizer-step",
-    label: "TokenizerStep",
+    id: "word-tokenizer-step",
+    label: "WordTokenizerStep",
     file: "backend/preprocessors/tokenizer.py",
     kind: "class",
     description:
       "Splits the cleaned text into tokens using spaCy when available.",
+  },
+  {
+    id: "subword-tokenizer-step",
+    label: "SubwordTokenizerStep",
+    file: "backend/preprocessors/tokenizer.py",
+    kind: "class",
+    description: "Splits text into sub-word units using a transformer-based tokenizer.",
   },
   {
     id: "pos-step",
@@ -159,7 +166,8 @@ export const edges: DiagramEdge[] = [
   { from: "preprocess-route", to: "pipeline-class", label: "instantiates" },
   { from: "pipeline-class", to: "pipeline-run", label: "executes" },
   { from: "pipeline-run", to: "cleaning-step", label: "creates" },
-  { from: "pipeline-run", to: "tokenizer-step", label: "creates" },
+  { from: "pipeline-run", to: "word-tokenizer-step", label: "creates" },
+  { from: "pipeline-run", to: "subword-tokenizer-step", label: "creates" },
   { from: "pipeline-run", to: "pos-step", label: "creates" },
   { from: "pipeline-run", to: "ner-step", label: "creates" },
   { from: "pipeline-run", to: "stopword-step", label: "creates" },
@@ -168,7 +176,8 @@ export const edges: DiagramEdge[] = [
   { from: "pipeline-run", to: "embedding-step", label: "creates" },
   { from: "pipeline-step-model", to: "pipeline-run", label: "shape" },
   { from: "cleaning-step", to: "pipeline-step-model", label: "returns" },
-  { from: "tokenizer-step", to: "pipeline-step-model", label: "returns" },
+  { from: "word-tokenizer-step", to: "pipeline-step-model", label: "returns" },
+  { from: "subword-tokenizer-step", to: "pipeline-step-model", label: "returns" },
   { from: "pos-step", to: "pipeline-step-model", label: "returns" },
   { from: "ner-step", to: "pipeline-step-model", label: "returns" },
   { from: "stopword-step", to: "pipeline-step-model", label: "returns" },
@@ -179,7 +188,8 @@ export const edges: DiagramEdge[] = [
 
 export const codeMap: Record<string, string> = {
   "cleaning-step": "CleaningStep",
-  "tokenizer-step": "TokenizerStep",
+  "word-tokenizer-step": "WordTokenizerStep",
+  "subword-tokenizer-step": "SubwordTokenizerStep",
   "pos-step": "POSStep",
   "ner-step": "NERStep",
   "stopword-step": "StopwordStep",

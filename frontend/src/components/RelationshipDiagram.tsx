@@ -1,4 +1,3 @@
-
 import { useMemo, useState } from "react";
 import { nodes, edges, codeMap } from "./relationshipDiagramData";
 import { buildAutoLayout } from "./relationshipDiagramUtils";
@@ -26,7 +25,7 @@ export function RelationshipDiagram({
   currentIndex,
 }: RelationshipDiagramProps) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(
-    "pipeline-run"
+    "pipeline-run",
   );
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
   const [modalNodeId, setModalNodeId] = useState<string | null>(null);
@@ -42,15 +41,15 @@ export function RelationshipDiagram({
 
   const { positionedNodes, graphWidth, graphHeight } = useMemo(
     () => buildAutoLayout(nodes, edges),
-    []
+    [],
   );
 
   const selectedNode = useMemo(
     () =>
       positionedNodes.find(
-        (node) => node.id === (hoveredNodeId ?? selectedNodeId)
+        (node) => node.id === (hoveredNodeId ?? selectedNodeId),
       ) ?? positionedNodes[0],
-    [hoveredNodeId, positionedNodes, selectedNodeId]
+    [hoveredNodeId, positionedNodes, selectedNodeId],
   );
 
   const activeStep = steps[currentIndex] ?? null;
@@ -73,7 +72,6 @@ export function RelationshipDiagram({
         setZoom={setZoom}
         selectedNode={selectedNode}
         activeStep={activeStep}
-        positionedNodes={positionedNodes}
       />
       <DiagramCanvas
         positionedNodes={positionedNodes}

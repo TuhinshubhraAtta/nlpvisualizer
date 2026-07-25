@@ -1,28 +1,23 @@
 import type { PositionedNode } from "./relationshipDiagramUtils";
 import { kindStyles } from "./diagramStyles";
+import type { DiagramNode } from "./relationshipDiagramData";
 
 type DiagramUIProps = {
   setZoom: (value: (prev: number) => number) => void;
   selectedNode: PositionedNode;
   activeStep: { name: string; input: any; output: any } | null;
-  positionedNodes: PositionedNode[];
 };
 
 export function DiagramUI({
   setZoom,
   selectedNode,
   activeStep,
-  positionedNodes,
 }: DiagramUIProps) {
   return (
     <div className="grid gap-4 xl:grid-cols-[1.4fr_0.8fr]">
       {/* This part was missing, it renders the header and sidebar */}
       <DiagramHeader setZoom={setZoom} />
-      <Sidebar
-        selectedNode={selectedNode}
-        activeStep={activeStep}
-        positionedNodes={positionedNodes}
-      />
+      <Sidebar selectedNode={selectedNode} activeStep={activeStep} />
     </div>
   );
 }
@@ -88,18 +83,16 @@ function ZoomControls({
 function Sidebar({
   selectedNode,
   activeStep,
-  positionedNodes,
 }: {
   selectedNode: PositionedNode;
   activeStep: { name: string; input: any; output: any } | null;
-  positionedNodes: PositionedNode[];
 }) {
   return (
     <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
       <SelectedNodeInfo selectedNode={selectedNode} />
       <LiveDataFlow activeStep={activeStep} />
       <InteractionTips />
-      <Legend positionedNodes={positionedNodes} />
+      <Legend />
     </div>
   );
 }
@@ -169,20 +162,18 @@ function InteractionTips() {
   );
 }
 
-function Legend({ positionedNodes }: { positionedNodes: PositionedNode[] }) {
+function Legend() {
+  const kinds = Object.keys(kindStyles) as Array<DiagramNode["kind"]>;
   return (
     <div className="mt-4">
       <div className="mb-2 text-sm font-semibold uppercase tracking-wide text-slate-400">
         Legend
       </div>
-      <div className="space-y-3 text-sm text-slate-300">
-        {positionedNodes.map((node) => (
-          <div
-            key={`${node.id}-legend`}
-            className={`rounded-xl border p-3 ${kindStyles[node.kind]}`}
-          >
-            <div className="font-semibold">{node.label}</div>
-            <div className="mt-1 text-xs opacity-80">{node.description}</div>
+      <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm text-slate-300">
+        {kinds.map((kind) => (
+          <div key={kind} className="flex items-center gap-2">
+            <div className={`h-3 w-3 rounded-sm border ${kindStyles[kind]}`} />
+            <span className="text-xs capitalize">{kind}</span>
           </div>
         ))}
       </div>
